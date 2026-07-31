@@ -1,8 +1,8 @@
+from pathlib import Path
+import importlib.util
+import zipfile
 import sys
 import os
-import zipfile
-import importlib.util
-from pathlib import Path
 
 script_dir = Path(__file__).resolve().parent
 
@@ -22,6 +22,6 @@ install_package("/home/carter/PythonProjects/.terminal_packages/test.zip", "test
 
 while True:
     inp = input()
-    
+
 
 #test_package = load_package("/home/carter/PythonProjects/.terminal_packages/test/main.py", "test_package")
