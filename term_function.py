@@ -1,4 +1,7 @@
 import subprocess
+import sys
+
+main_file = sys.modules["__main__"]
 
 def cmd_clear():
     subprocess.run("clear")
@@ -9,6 +12,7 @@ def cmd_help():
     print("Use `help` to repeat help")
 
 def cmd_exit():
+    print(f"> {main_file.COLOR}Exiting...{main_file.RESET} <")
     exit()
 
 commands = {
