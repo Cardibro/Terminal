@@ -3,6 +3,12 @@ import importlib.util
 import zipfile
 import sys
 import os
+import importlib.util
+from pathlib import Path
+import term_function
+
+COLOR = '\033[92m'
+RESET = '\033[0m'
 
 script_dir = Path(__file__).resolve().parent
 
@@ -13,21 +19,26 @@ def load_package(package_name):
     spec.loader.exec_module(package)
     return package
 
-def install_package(file_path):
-    package_name = os.path.splitext(os.path.basename(file_path))[0]
-    os.mkdir(package_name)
+def confirmation(question):
     try:
-        with zipfile.ZipFile(file_path,'r') as zip_ref:
-                zip_ref.extractall(path = script_dir / package_name)
-    except:
-        print("File path not found")
-        os.rmdir(package_name)
+        confirmation = input(question + " (y/n) > ")
+    except KeyboardInterrupt:
+        exit_terminal()
 
-def remove_package(package_name):
-    os.rmdir(script_dir / package_name)
+    if confirmation.lower() == "y" or confirmation.lower() == "yes":
+        return True
+    else:
+        return False
+
+def exit_terminal():
+    print(f"\n> {COLOR}Exiting...{RESET} <")
+    exit()
 
 while True:
-    inp = input(str(script_dir) + " >")
+    try:
+        inp = input(f"{COLOR}"+str(script_dir) + f"{RESET} > ")
+    except KeyboardInterrupt:
+        exit_terminal()
 
     input_components = inp.split(" ")
 
@@ -58,7 +69,11 @@ while True:
         else:
             sys.modules[input_package].run(attributes,flags)
     else:
-        print("Command "+input_package+" not found!")
+        if term_function.commands.get(input_package):
+            term_function.commands.get(input_package)()
+        else:
+            print("Command '"+input_package+"' not found!")
+            print("Use 'help' for help")
     
 
 #pkg install /home/carter/PythonProjects/.terminal_packages/test.zip
