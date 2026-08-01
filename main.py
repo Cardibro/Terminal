@@ -1,3 +1,6 @@
+from pathlib import Path
+import importlib.util
+import zipfile
 import sys
 import os
 import importlib.util
