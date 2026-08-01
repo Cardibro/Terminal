@@ -29,16 +29,16 @@ packages_by_name = {pkg["name"]: pkg for pkg in index_data}
 
 def run(attributes, flags):
     if "-help" in flags:
-        print("Use `pkg install {/path/to/package}` to install a package")
+        print("Use `pkg install {package_name}` to install a package")
         print("Use `pkg remove {package_name}` to remove a package")
         return True
     
     if attributes.get("install") is not None:
-        install_package(attributes.get("install"))
+        install_package(attributes.get("install"), ("-y" in flags))
         return True
 
     if attributes.get("remove") is not None:
-        remove_package(attributes.get("remove"))
+        remove_package(attributes.get("remove"), ("-y" in flags))
         return True
 
     print("Please use `pkg -help` for help with packages")
@@ -75,19 +75,21 @@ def download_repo_zip(owner, repo, branch, destination):
 
         shutil.copytree(str(extracted_folder), str(destination))
 
-def install_package(package_name):
+def install_package(package_name, confirm):
     package_info = packages_by_name.get(package_name)
     if package_info is None:
         main_module.error(f"Package '{package_name}' not found")
         return False
     else:
         if os.path.exists(script_dir / "installed" /package_name):
-            main_module.warn("Package already installed at " + str(script_dir) + "/" + package_name)
+            main_module.warn("Package already installed at " + str(script_dir) + "/installed/" + package_name)
             return False
         deps = []
         find_dependencies(package_name, deps)
 
-        if deps is not None:
+        conf_text = "Are you sure you want to install '" + package_name + "' and it's dependencies? "
+
+        if len(deps)>0:
             main_module.warn(f"'{package_name}' requires {len(deps)} dependenc(ies)!")
             
             for index, dep in enumerate(deps):
@@ -95,16 +97,23 @@ def install_package(package_name):
                     print(f"{GREEN}Dependency {index+1}: '{dep}' (INSTALLED){RESET}")
                 else:
                     main_module.warn(f"Dependency {index+1}: '{dep}'")
-        if main_module.confirmation("Are you sure you want to install '" + package_name + "' and it's dependencies? "):
+        else:
+            conf_text="Are you sure you want to install '" + package_name + "'? "
+        if confirm or main_module.confirmation(conf_text):
             download_repo_zip(package_info["owner"], package_info["repo"], package_info["branch"], package_info["destination"])
+
+            for index, dep in enumerate(deps):
+                if not os.path.exists(script_dir / "installed" / dep):
+                    dep_info = packages_by_name.get(dep)
+                    download_repo_zip(dep_info["owner"], dep_info["repo"], dep_info["branch"], dep_info["destination"])
 
             print(f"Package '{package_name}' successfully installed")
         else:
             print(f"Package '{package_name}' was not installed")
 
-def remove_package(package_name):
+def remove_package(package_name, confirm):
     try:
-        if main_module.confirmation("Are you sure you want to remove '" + package_name + "'?"):
+        if confirm or main_module.confirmation("Are you sure you want to remove '" + package_name + "'?"):
             shutil.rmtree(script_dir / "installed" / package_name)
             print(f"Package '{package_name}' successfully removed")
         else:
